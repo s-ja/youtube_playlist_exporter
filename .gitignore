@@ -58,3 +58,6 @@ credentials.json
 venv/
 .venv/
 env/
+
+# 데이터
+takeout_data/
