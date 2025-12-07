@@ -1,0 +1,16 @@
+# 확장 프로그램 빌드 파일
+*.zip
+*.crx
+*.pem
+
+# Node modules (사용 시)
+node_modules/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
