@@ -30,7 +30,7 @@ wheels/
 # 출력 파일
 output/*
 *.json
-*.md
+# *.md
 *.html
 
 # 브라우저 확장 프로그램 빌드 파일
