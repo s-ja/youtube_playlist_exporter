@@ -135,12 +135,12 @@ class HTMLExporter(BaseExporter):
             {% for video in videos %}
             <div class="video-card">
                 <a href="{{ video.url }}" target="_blank">
-                    <img src="{{ video.thumbnail }}" alt="{{ video.title }}" class="video-thumbnail" 
+                    <img src="{{ video.thumbnail }}" alt="{{ video.title if video.title else (video.video_id if video.video_id else '영상') }}" class="video-thumbnail" 
                          onerror="this.src='https://via.placeholder.com/320x180?text=No+Thumbnail'">
                 </a>
                 <div class="video-info">
                     <div class="video-title">
-                        <a href="{{ video.url }}" target="_blank">{{ video.title }}</a>
+                        <a href="{{ video.url }}" target="_blank">{{ video.title if video.title else (video.video_id if video.video_id else '영상') }}</a>
                     </div>
                     {% if video.channel_title %}
                     <div class="video-meta video-channel">채널: {{ video.channel_title }}</div>

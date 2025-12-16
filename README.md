@@ -11,6 +11,7 @@ YouTube 계정의 재생목록을 추출하여 JSON, Markdown, HTML 형식으로
 - ✅ HTML 형식으로 썸네일 포함 시각적 확인 가능
 - ✅ 순차 처리로 안정적인 데이터 수집
 - ✅ 커서 에디터의 에이전트 분할 및 병렬 요청 처리 활용
+- ✅ **Google Takeout CSV 파일 변환 지원** (Watch Later 포함)
 
 ### 브라우저 확장 프로그램 (개발 예정)
 - 🚧 Watch Later 재생목록 추출 (API로 접근 불가능한 경우)
@@ -21,7 +22,9 @@ YouTube 계정의 재생목록을 추출하여 JSON, Markdown, HTML 형식으로
 
 ```
 youtube_playlist_export/
-├── main.py                 # 메인 실행 파일
+├── main.py                 # 메인 실행 파일 (YouTube API 기반 추출)
+├── takeout_converter.py    # Takeout CSV 변환 스크립트
+├── takeout_parser.py       # Takeout CSV 파서
 ├── config.py              # 설정 관리
 ├── youtube_api.py         # YouTube API 연동
 ├── playlist_extractor.py  # 재생목록 추출 로직
@@ -195,6 +198,60 @@ python main.py --workers 10
 python main.py --api-key your_api_key_here
 ```
 
+### Google Takeout CSV 파일 변환
+
+Google Takeout에서 다운로드한 YouTube 재생목록 CSV 파일을 변환할 수 있습니다. **Watch Later 재생목록도 포함**됩니다.
+
+#### 1. Google Takeout에서 데이터 다운로드
+
+1. [Google Takeout](https://takeout.google.com/) 접속
+2. "YouTube 및 YouTube Music" 선택
+3. "재생목록" 데이터만 선택하여 다운로드
+4. 압축 해제 후 재생목록 폴더 경로 확인
+
+#### 2. CSV 파일 변환
+
+```bash
+python takeout_converter.py --takeout-dir "경로/YouTube 및 YouTube Music/재생목록"
+```
+
+#### 3. 출력 형식 지정
+
+```bash
+# JSON만 생성
+python takeout_converter.py --takeout-dir "경로/재생목록" --format json
+
+# JSON, Markdown, HTML 모두 생성 (기본값)
+python takeout_converter.py --takeout-dir "경로/재생목록" --format json,markdown,html
+```
+
+#### 4. 출력 디렉토리 지정
+
+```bash
+# 기본값: ./output_takeout (API 기반 추출과 구분)
+python takeout_converter.py --takeout-dir "경로/재생목록"
+
+# 사용자 지정 디렉토리
+python takeout_converter.py --takeout-dir "경로/재생목록" --output-dir ./my_output
+```
+
+**⚠️ 중요**: Takeout 변환은 기본적으로 `./output_takeout` 디렉토리에 저장되어 API 기반 추출 결과(`./output`)와 자동으로 구분됩니다.
+
+#### Takeout 변환의 특징
+
+- ✅ **Watch Later 포함**: API로 접근 불가능한 Watch Later 재생목록도 추출 가능
+- ✅ **API 키 불필요**: CSV 파일만 있으면 변환 가능
+- ⚠️ **영상 제목 없음**: CSV에는 영상 ID만 포함되어 있어 제목은 비어있음 (영상 ID로 표시)
+- ✅ **동일한 출력 형식**: API 기반 추출과 동일한 JSON/Markdown/HTML 형식
+
+#### 영상 정보 보강 (선택사항)
+
+YouTube API를 사용하여 영상 제목, 채널 정보 등을 가져올 수 있습니다 (향후 구현 예정):
+
+```bash
+python takeout_converter.py --takeout-dir "경로/재생목록" --enrich
+```
+
 ## 출력 구조
 
 출력 파일은 재생목록별로 폴더가 생성되어 정리됩니다:
@@ -266,9 +323,17 @@ output/
 
 **⚠️ 중요**: YouTube Data API v3에서는 Watch Later 재생목록에 접근할 수 없을 수 있습니다.
 
-### 해결 방법: 브라우저 확장 프로그램
+#### 해결 방법 1: Google Takeout 사용 (권장)
 
-Watch Later를 추출하려면 브라우저 확장 프로그램을 사용하세요:
+Google Takeout에서 다운로드한 CSV 파일을 변환하면 **Watch Later 재생목록도 포함**됩니다:
+
+```bash
+python takeout_converter.py --takeout-dir "경로/YouTube 및 YouTube Music/재생목록"
+```
+
+#### 해결 방법 2: 브라우저 확장 프로그램 (개발 예정)
+
+Watch Later를 추출하려면 브라우저 확장 프로그램을 사용할 수 있습니다:
 
 1. `browser-extension/` 디렉토리로 이동
 2. Chrome/Edge에서 확장 프로그램 로드

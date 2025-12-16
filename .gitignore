@@ -29,6 +29,7 @@ wheels/
 
 # 출력 파일
 output/*
+output_takeout/*
 *.json
 # *.md
 *.html

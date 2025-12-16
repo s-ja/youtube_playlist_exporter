@@ -40,7 +40,9 @@ class MarkdownExporter(BaseExporter):
             f.write("## 영상 목록\n\n")
             
             for idx, video in enumerate(playlist_data["videos"], 1):
-                f.write(f"{idx}. [{video['title']}]({video['url']})\n")
+                # 제목이 없으면 영상 ID 사용
+                title = video.get('title') or video.get('video_id') or f"영상 {idx}"
+                f.write(f"{idx}. [{title}]({video['url']})\n")
                 if video.get("channel_title"):
                     f.write(f"   - 채널: {video['channel_title']}\n")
                 if video.get("added_at"):
