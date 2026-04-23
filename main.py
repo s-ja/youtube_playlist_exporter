@@ -61,12 +61,6 @@ def main():
         help='출력 디렉토리 경로 (기본값: ./output)'
     )
     parser.add_argument(
-        '--workers',
-        type=int,
-        default=5,
-        help='병렬 처리 워커 수 (기본값: 5)'
-    )
-    parser.add_argument(
         '--api-key',
         type=str,
         help='YouTube API 키 (선택사항, OAuth 2.0이 기본값이며 권장됩니다)'
@@ -91,7 +85,7 @@ def main():
     youtube_api = YouTubeAPI(api_key=args.api_key)
     
     # 재생목록 추출기 초기화
-    extractor = PlaylistExtractor(youtube_api, max_workers=args.workers)
+    extractor = PlaylistExtractor(youtube_api)
     
     try:
         # 재생목록 추출 및 파일 출력

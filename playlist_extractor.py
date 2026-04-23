@@ -2,30 +2,21 @@
 재생목록 추출 로직
 병렬 처리 및 데이터 수집
 """
-import asyncio
 from typing import List, Dict
-from concurrent.futures import ThreadPoolExecutor, as_completed
 from youtube_api import YouTubeAPI
-import config
 
 
 class PlaylistExtractor:
     """재생목록 추출 클래스"""
     
-    def __init__(self, youtube_api: YouTubeAPI, max_workers: int = 5):
+    def __init__(self, youtube_api: YouTubeAPI):
         """
         초기화
         
         Args:
             youtube_api: YouTube API 클라이언트
-            max_workers: 병렬 처리 최대 워커 수 (SSL 오류 방지를 위해 1 권장)
         """
         self.youtube_api = youtube_api
-        # SSL 오류 방지를 위해 워커 수를 1로 제한 (순차 처리)
-        # 병렬 처리는 SSL 연결 충돌을 일으킬 수 있음
-        self.max_workers = 1  # 순차 처리로 변경
-        if max_workers > 1:
-            print(f"⚠️  SSL 오류 방지를 위해 순차 처리 모드로 실행합니다 (워커 수: 1).")
     
     def extract_all_playlists(self) -> List[Dict]:
         """
