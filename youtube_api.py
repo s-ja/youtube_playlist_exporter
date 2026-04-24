@@ -381,6 +381,7 @@ class YouTubeAPI:
                     )
                     
                     yield {
+                        "playlist_item_id": item["id"],
                         "video_id": video_id,
                         "title": snippet.get("title", "제목 없음"),
                         "description": snippet.get("description", ""),

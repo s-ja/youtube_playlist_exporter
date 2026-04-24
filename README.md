@@ -294,9 +294,11 @@ output/
   "videos": [
     {
       "video_id": "xxxxxxxxxxx",
+      "playlist_item_id": "UExxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
       "title": "영상 제목",
       "url": "https://www.youtube.com/watch?v=xxxxxxxxxxx",
       "thumbnail": "https://i.ytimg.com/...",
+      "position": 0,
       "channel_title": "채널 이름",
       "added_at": "2024-01-01T00:00:00Z"
     }
