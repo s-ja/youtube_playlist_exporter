@@ -7,7 +7,9 @@ from deleter import (
     backup_target_file,
     delete_playlist_items,
     limited_targets,
+    load_successful_playlist_item_ids,
     load_target_file,
+    pending_targets,
     write_log,
 )
 
@@ -85,6 +87,30 @@ class DeleterTests(unittest.TestCase):
 
         self.assertTrue(backup_path.exists())
         self.assertTrue(log_path.exists())
+
+    def test_load_successful_playlist_item_ids_from_logs(self):
+        write_log(
+            self.workdir / "deletion_success_20260424_120000.json",
+            [{"playlistItemId": "pi-1"}, {"playlistItemId": "pi-3"}],
+        )
+        write_log(
+            self.workdir / "deletion_failed_20260424_120000.json",
+            [{"playlistItemId": "pi-2"}],
+        )
+
+        successful_ids = load_successful_playlist_item_ids(self.workdir)
+
+        self.assertEqual(successful_ids, {"pi-1", "pi-3"})
+
+    def test_pending_targets_excludes_successful_ids_by_default(self):
+        targets = pending_targets(["pi-1", "pi-2", "pi-3"], {"pi-1", "pi-3"}, False)
+
+        self.assertEqual(targets, ["pi-2"])
+
+    def test_pending_targets_can_ignore_success_logs(self):
+        targets = pending_targets(["pi-1", "pi-2", "pi-3"], {"pi-1", "pi-3"}, True)
+
+        self.assertEqual(targets, ["pi-1", "pi-2", "pi-3"])
 
     def test_delete_playlist_items_continues_after_failure(self):
         service = _FakeService(failures={"pi-2"})

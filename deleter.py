@@ -34,8 +34,38 @@ def load_target_file(path: Path) -> Dict[str, Any]:
     return data
 
 
-def limited_targets(delete_list: List[Any], limit: Optional[int]) -> List[str]:
+def load_successful_playlist_item_ids(log_dir: Path) -> set[str]:
+    successful_ids: set[str] = set()
+
+    for path in sorted(log_dir.glob("deletion_success_*.json")):
+        try:
+            with open(path, "r", encoding="utf-8") as f:
+                records = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            continue
+
+        if not isinstance(records, list):
+            continue
+
+        for record in records:
+            if not isinstance(record, dict):
+                continue
+            playlist_item_id = record.get("playlistItemId")
+            if playlist_item_id not in (None, ""):
+                successful_ids.add(str(playlist_item_id))
+
+    return successful_ids
+
+
+def pending_targets(delete_list: List[Any], successful_ids: set[str], ignore_success_log: bool) -> List[str]:
     targets = [str(item) for item in delete_list if item not in (None, "")]
+    if ignore_success_log:
+        return targets
+    return [item for item in targets if item not in successful_ids]
+
+
+def limited_targets(targets: List[Any], limit: Optional[int]) -> List[str]:
+    targets = [str(item) for item in targets if item not in (None, "")]
     if limit is not None:
         if limit < 1:
             raise ValueError("--limit 값은 1 이상이어야 합니다.")
@@ -43,7 +73,15 @@ def limited_targets(delete_list: List[Any], limit: Optional[int]) -> List[str]:
     return targets
 
 
-def print_plan(target_data: Dict[str, Any], target_path: Path, targets: List[str], execute: bool) -> None:
+def print_plan(
+    target_data: Dict[str, Any],
+    target_path: Path,
+    targets: List[str],
+    execute: bool,
+    successful_count: int,
+    pending_count: int,
+    ignore_success_log: bool,
+) -> None:
     summary = target_data.get("summary", {})
     source_file = target_data.get("source_file", "N/A")
     full_delete_count = len(target_data.get("delete_list", []))
@@ -54,7 +92,10 @@ def print_plan(target_data: Dict[str, Any], target_path: Path, targets: List[str
     print(f"- source_file: {source_file}")
     print(f"- summary.duplicate_count: {summary.get('duplicate_count', 'N/A')}")
     print(f"- delete_list 전체 개수: {full_delete_count}")
-    print(f"- 이번 실행 대상 개수: {len(targets)}")
+    print(f"- 성공 로그 기반 제외: {'사용 안 함' if ignore_success_log else '사용'}")
+    print(f"- 이미 삭제 성공 로그에 있는 개수: {successful_count}")
+    print(f"- 이번 실행 가능 잔여 개수: {pending_count}")
+    print(f"- limit 적용 후 실제 요청 개수: {len(targets)}")
 
 
 def confirm_execution() -> bool:
@@ -183,15 +224,34 @@ def main() -> int:
         type=Path,
         help="백업/성공/실패 로그 저장 디렉토리. 기본값: target JSON이 있는 디렉토리",
     )
+    parser.add_argument(
+        "--ignore-success-log",
+        action="store_true",
+        help="기존 deletion_success_*.json 로그를 무시하고 delete_list를 처음부터 다시 대상으로 삼습니다.",
+    )
 
     args = parser.parse_args()
 
     try:
         target_data = load_target_file(args.target_json)
-        targets = limited_targets(target_data["delete_list"], args.limit)
         log_dir = args.log_dir or args.target_json.parent
+        successful_ids = load_successful_playlist_item_ids(log_dir)
+        pending = pending_targets(
+            target_data["delete_list"],
+            successful_ids,
+            args.ignore_success_log,
+        )
+        targets = limited_targets(pending, args.limit)
 
-        print_plan(target_data, args.target_json, targets, args.execute)
+        print_plan(
+            target_data,
+            args.target_json,
+            targets,
+            args.execute,
+            len(successful_ids),
+            len(pending),
+            args.ignore_success_log,
+        )
 
         if not targets:
             print("삭제 대상이 없습니다.")

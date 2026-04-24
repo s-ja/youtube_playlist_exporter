@@ -361,6 +361,12 @@ python3 deleter.py target_to_delete.json --execute --limit 1
 - `--limit N`: 이번 실행에서 `delete_list` 앞쪽 N개만 처리합니다.
 - `--delay 2.0`: 삭제 요청 사이의 대기 시간입니다. 기본값은 2초입니다.
 - `--log-dir PATH`: 백업, 성공 로그, 실패 로그 저장 위치를 지정합니다.
+- `--ignore-success-log`: 기존 `deletion_success_*.json` 로그를 무시하고 `delete_list`를 처음부터 다시 대상으로 삼습니다.
+
+재실행 안전장치:
+- 기본적으로 `deleter.py`는 같은 로그 디렉토리의 `deletion_success_*.json`을 읽습니다.
+- 이미 삭제 성공으로 기록된 `playlistItemId`는 다음 실행 대상에서 자동 제외됩니다.
+- 중간 실패가 있으면 성공한 항목만 제외되고 실패 항목은 다음 실행에서 다시 시도됩니다.
 
 실제 실행 시 생성되는 파일:
 - `delete_backup_YYYYMMDD_HHMMSS.json`
