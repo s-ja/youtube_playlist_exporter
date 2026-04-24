@@ -31,5 +31,5 @@ YOUTUBE_API_SERVICE_NAME = "youtube"
 YOUTUBE_API_VERSION = "v3"
 
 # OAuth 2.0 스코프
-YOUTUBE_SCOPES = ["https://www.googleapis.com/auth/youtube.readonly"]
-
+# playlistItems.delete 실행을 위해 readonly보다 넓은 youtube 스코프가 필요합니다.
+YOUTUBE_SCOPES = ["https://www.googleapis.com/auth/youtube"]

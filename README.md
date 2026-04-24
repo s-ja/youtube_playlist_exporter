@@ -314,6 +314,59 @@ output/
 
 썸네일 이미지가 포함된 시각적인 HTML 파일로 저장합니다. 브라우저에서 바로 확인할 수 있습니다.
 
+## 중복 영상 분석 Dry-run
+
+추출된 재생목록 JSON을 로컬에서 분석하여 중복 영상 삭제 후보만 파일로 저장할 수 있습니다. 이 단계는 YouTube API를 호출하지 않고 실제 삭제도 하지 않습니다.
+
+```bash
+python3 deduplicator.py "output/재생목록명/재생목록명.json"
+```
+
+기본 출력 파일은 `target_to_delete.json`입니다. 경로를 바꾸려면 `--output`을 사용합니다.
+
+```bash
+python3 deduplicator.py "output/재생목록명/재생목록명.json" --output "output/재생목록명/target_to_delete.json"
+```
+
+분석 규칙:
+- `video_id` 또는 `videoId`가 같은 항목을 중복 그룹으로 묶습니다.
+- 각 그룹에서 `position`이 가장 작은 항목 하나만 보존합니다.
+- 나머지 항목의 `playlist_item_id` 또는 `playlistItemId`를 `delete_list`에 저장합니다.
+
+주의: 실제 삭제에는 YouTube `playlistItems.delete`에 전달할 playlist item ID가 필요합니다. `playlist_item_id`가 없는 과거 JSON은 최신 코드로 재추출한 뒤 사용하세요.
+
+## 중복 영상 삭제 실행
+
+`target_to_delete.json`의 `delete_list`를 바탕으로 실제 YouTube 재생목록 항목을 삭제할 수 있습니다. 기본값은 항상 dry-run이며, `--execute`를 명시하고 확인 프롬프트에 `y`를 입력해야 실제 삭제가 진행됩니다.
+
+권한 준비:
+- 삭제 API 사용을 위해 OAuth scope는 `https://www.googleapis.com/auth/youtube`를 사용합니다.
+- 기존 `token.json`이 readonly 권한으로 발급된 경우 재인증이 필요합니다.
+- 인증 문제가 계속되면 프로젝트 루트의 `token.json`을 삭제한 뒤 다시 실행하세요.
+- Google Cloud Console의 OAuth 동의 화면에도 해당 scope가 반영되어 있어야 합니다.
+
+삭제 전 계획 확인:
+
+```bash
+python3 deleter.py target_to_delete.json --limit 1
+```
+
+최초 실제 테스트는 반드시 소량으로 실행하세요.
+
+```bash
+python3 deleter.py target_to_delete.json --execute --limit 1
+```
+
+옵션:
+- `--limit N`: 이번 실행에서 `delete_list` 앞쪽 N개만 처리합니다.
+- `--delay 2.0`: 삭제 요청 사이의 대기 시간입니다. 기본값은 2초입니다.
+- `--log-dir PATH`: 백업, 성공 로그, 실패 로그 저장 위치를 지정합니다.
+
+실제 실행 시 생성되는 파일:
+- `delete_backup_YYYYMMDD_HHMMSS.json`
+- `deletion_success_YYYYMMDD_HHMMSS.json`
+- `deletion_failed_YYYYMMDD_HHMMSS.json`
+
 ## 커서 에디터 활용 전략
 
 이 프로젝트는 커서 에디터의 고급 기능을 활용하도록 설계되었습니다:
@@ -379,4 +432,3 @@ MIT License
 ## 기여
 
 이슈 및 풀 리퀘스트를 환영합니다!
-

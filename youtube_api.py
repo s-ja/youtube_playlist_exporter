@@ -48,9 +48,15 @@ class YouTubeAPI:
         
         # 저장된 토큰이 있으면 로드
         if token_file.exists():
-            creds = Credentials.from_authorized_user_file(
-                str(token_file), config.YOUTUBE_SCOPES
-            )
+            if not self._token_has_required_scopes(token_file):
+                print("\n⚠️  기존 token.json의 OAuth 권한이 현재 작업에 부족합니다.")
+                print("   재생목록 항목 삭제를 위해 YouTube 계정 관리 권한 재승인이 필요합니다.")
+                print("   기존 토큰은 무시하고 새 권한으로 인증을 진행합니다.")
+                print("   인증 문제가 계속되면 token.json을 삭제한 뒤 다시 실행하세요.\n")
+            else:
+                creds = Credentials.from_authorized_user_file(
+                    str(token_file), config.YOUTUBE_SCOPES
+                )
         
         # 토큰이 없거나 만료된 경우 새로 인증
         if not creds or not creds.valid:
@@ -101,6 +107,27 @@ class YouTubeAPI:
             credentials=creds
         )
         return True
+
+    def _token_has_required_scopes(self, token_file) -> bool:
+        """
+        저장된 token.json이 현재 설정된 OAuth scope를 포함하는지 확인합니다.
+        과거 readonly 토큰으로 삭제 API를 호출하는 실수를 막기 위한 사전 점검입니다.
+        """
+        try:
+            with open(token_file, "r", encoding="utf-8") as f:
+                token_data = json.load(f)
+        except (OSError, json.JSONDecodeError):
+            return False
+
+        token_scopes = token_data.get("scopes")
+        if isinstance(token_scopes, str):
+            token_scope_set = set(token_scopes.split())
+        elif isinstance(token_scopes, list):
+            token_scope_set = set(token_scopes)
+        else:
+            return False
+
+        return set(config.YOUTUBE_SCOPES).issubset(token_scope_set)
     
     def get_service(self, require_oauth: bool = True):
         """
@@ -402,4 +429,3 @@ class YouTubeAPI:
         except (HttpError, ssl.SSLError, OSError, ConnectionError) as e:
             print(f"재생목록 영상 조회 중 오류 발생 (재생목록 ID: {playlist_id}): {e}")
             raise
-
